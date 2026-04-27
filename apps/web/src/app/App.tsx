@@ -29,7 +29,8 @@ export function App() {
         <aside className="border-b bg-card/95 px-4 py-4 lg:border-b-0 lg:border-r lg:px-5 lg:py-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background text-foreground shadow-sm">
-              <OpenAILogo className="h-6 w-6" />
+              {/* 品牌图标来自 public 下的本地 SVG，避免运行时依赖远程 CDN。 */}
+              <img className="h-6 w-6" src="/openai-icon.svg" alt="OpenAI 标志" />
             </div>
             <div>
               <h1 className="text-base font-semibold leading-tight">{messages.appTitle}</h1>
@@ -61,31 +62,5 @@ export function App() {
         </section>
       </div>
     </main>
-  );
-}
-
-interface OpenAILogoProps {
-  className?: string;
-}
-
-/** OpenAILogo 是侧栏品牌标识，用内联 SVG 避免额外图片请求。 */
-function OpenAILogo({ className }: OpenAILogoProps) {
-  return (
-    <svg className={className} aria-label="OpenAI 标志" role="img" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M12 4.8c1.7-2 4.9-1.2 5.7 1.3.5 1.4.2 2.8-.8 3.9 2.6.4 4.1 3.3 2.7 5.6-.8 1.3-2 2-3.5 2.1.9 2.5-1.2 5-3.9 4.7-1.5-.2-2.6-1-3.3-2.3-1.7 2-4.9 1.2-5.7-1.3-.5-1.4-.2-2.8.8-3.9-2.6-.4-4.1-3.3-2.7-5.6.8-1.3 2-2 3.5-2.1-.9-2.5 1.2-5 3.9-4.7 1.5.2 2.6 1 3.3 2.3Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8.9 7.2 15 10.7v7.1M15.1 7.2 9 10.7v7.1M5.8 12l6.2 3.6 6.2-3.6M12 4.9v7.2"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

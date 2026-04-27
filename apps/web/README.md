@@ -27,6 +27,7 @@ npm run build
 
 ## 文件结构
 
+- `public`：Vite 直接复制的静态资源，例如左上角 OpenAI 标志。
 - `src/app`：应用壳和页面导航。
 - `src/components/ui`：shadcn/ui 风格基础组件，包含 Radix Select 和 Checkbox 封装。
 - `src/lib`：数据库、API、SSE、图片保存、导出等通用能力。

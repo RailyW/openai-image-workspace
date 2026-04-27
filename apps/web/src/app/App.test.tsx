@@ -36,6 +36,6 @@ describe("应用壳冒烟测试", () => {
     expect(screen.queryByRole("heading", { name: "生成" })).not.toBeInTheDocument();
     expect(screen.queryByText("仅代理固定 Images 端点")).not.toBeInTheDocument();
     expect(screen.queryByText("本地优先")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("OpenAI 标志")).toBeInTheDocument();
+    expect(screen.getByAltText("OpenAI 标志")).toHaveAttribute("src", "/openai-icon.svg");
   });
 });
