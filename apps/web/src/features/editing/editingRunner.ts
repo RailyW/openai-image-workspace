@@ -59,7 +59,7 @@ export async function runEditing(input: RunEditingInput): Promise<TaskRecord> {
     const outputFormat =
       input.mode === "json"
         ? (requestBody as Record<string, unknown>).output_format
-        : ((input.values.output_format || undefined) as string | undefined);
+        : ((requestBody as FormData).get("output_format") ?? input.values.output_format);
     const mimeType = mimeTypeFromOutputFormat(outputFormat);
     if (envelope.kind === "sse" && envelope.response.body) {
       let completed = false;
