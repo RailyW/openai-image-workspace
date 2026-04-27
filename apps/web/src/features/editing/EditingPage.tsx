@@ -24,6 +24,7 @@ export function EditingPage() {
   const [advancedJson, setAdvancedJson] = useState("");
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
   const [partial, setPartial] = useState<string>();
+  const [controllers, setControllers] = useState<Record<string, AbortController>>({});
 
   useEffect(() => {
     async function load() {
@@ -42,6 +43,8 @@ export function EditingPage() {
       return;
     }
     const controller = new AbortController();
+    const localId = crypto.randomUUID();
+    setControllers((current) => ({ ...current, [localId]: controller }));
     const base = { model, prompt, stream, advancedJson };
     const task =
       mode === "multipart"
@@ -63,6 +66,11 @@ export function EditingPage() {
             signal: controller.signal,
             onPartial: setPartial,
           });
+    setControllers((current) => {
+      const next = { ...current };
+      delete next[localId];
+      return next;
+    });
     setTasks((current) => [task, ...current]);
   }
 
@@ -150,6 +158,14 @@ export function EditingPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {partial && <img className="max-h-80 rounded-md border object-contain" src={`data:image/png;base64,${partial}`} alt="流式预览" />}
+          {Object.entries(controllers).map(([id, controller]) => (
+            <div key={id} className="flex items-center justify-between rounded-md border p-3">
+              <span className="text-sm">编辑任务运行中</span>
+              <Button type="button" variant="destructive" onClick={() => controller.abort()}>
+                取消
+              </Button>
+            </div>
+          ))}
           {tasks.map((task) => (
             <div key={task.id} className="rounded-md border p-3 text-sm">
               <p>状态：{task.status}</p>
