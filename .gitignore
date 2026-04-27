@@ -5,3 +5,4 @@ node_modules/
 dist/
 apps/web/node_modules/
 apps/web/dist/
+*.tsbuildinfo
