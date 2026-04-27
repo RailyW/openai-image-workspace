@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
+import { Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db, type ImageRecord, type TaskRecord } from "@/lib/db/schema";
 import { formatDateTime } from "@/lib/utils";
 import { clearImagesKeepTasks, clearTasksByStatus, deleteTask } from "./historyActions";
 
+/** HistoryPage 读取本地任务和图片记录，并提供本地清理入口。 */
 export function HistoryPage() {
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
   const [images, setImages] = useState<ImageRecord[]>([]);
   const [filter, setFilter] = useState<"all" | "generation" | "edit">("all");
 
+  /** refresh 从 IndexedDB 加载任务和图片，页面不访问服务端历史。 */
   async function refresh() {
     const [taskItems, imageItems] = await Promise.all([
       db.tasks.orderBy("createdAt").reverse().toArray(),
@@ -45,24 +49,28 @@ export function HistoryPage() {
             编辑
           </Button>
           <Button variant="outline" onClick={() => clearImagesKeepTasks().then(refresh)}>
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
             只清理图片
           </Button>
           <Button variant="outline" onClick={() => clearTasksByStatus("failed").then(refresh)}>
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
             清理失败任务
           </Button>
           <Button variant="destructive" onClick={() => clearTasksByStatus("succeeded").then(refresh)}>
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
             清理成功任务
           </Button>
         </CardContent>
       </Card>
       <div className="grid gap-4">
         {filtered.map((task) => (
-          <Card key={task.id}>
+          <Card key={task.id} className="overflow-hidden">
             <CardContent className="grid gap-4 p-4 md:grid-cols-[1fr_220px]">
               <div className="space-y-1 text-sm">
-                <p className="font-medium">
-                  {task.kind === "generation" ? "生成" : "编辑"} · {task.status}
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium">{task.kind === "generation" ? "生成" : "编辑"}</p>
+                  <Badge variant={task.status === "failed" ? "destructive" : "secondary"}>{task.status}</Badge>
+                </div>
                 <p className="text-muted-foreground">服务：{task.providerSnapshot.name}</p>
                 <p className="text-muted-foreground">时间：{formatDateTime(task.createdAt)}</p>
                 {task.errorSummary && <p className="text-destructive">{task.errorSummary}</p>}
@@ -73,6 +81,7 @@ export function HistoryPage() {
                   </pre>
                 </details>
                 <Button variant="destructive" onClick={() => deleteTask(task.id).then(refresh)}>
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
                   删除
                 </Button>
               </div>
@@ -92,6 +101,7 @@ export function HistoryPage() {
   );
 }
 
+/** HistoryImage 将本地 Blob 或远程 URL 统一转成可展示的图片地址。 */
 function HistoryImage({ image }: { image: ImageRecord }) {
   const [url, setUrl] = useState<string>();
 

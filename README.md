@@ -1,6 +1,6 @@
-# OpenAI Images 内网网页工具
+# OpenAI Images 网页工具
 
-这是一个用于访问 OpenAI Images API 兼容服务的内网网页工具。前端负责完整的用户体验和本地数据管理，Go 后端只负责托管前端静态资源以及转发两个固定端点：
+这是一个用于访问 OpenAI Images API 兼容服务的网页工具。前端负责完整的用户体验和本地数据管理，Go 后端只负责托管前端静态资源以及转发两个固定端点：
 
 - `POST /api/images/generations`
 - `POST /api/images/edits`

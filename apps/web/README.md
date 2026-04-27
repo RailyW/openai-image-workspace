@@ -5,6 +5,7 @@
 ## 职责
 
 - 提供生成、编辑、历史、预设、设置页面。
+- 使用 shadcn/ui 风格组件和 Radix Primitive 保持表单控件视觉一致。
 - 使用 IndexedDB 保存用户的服务配置、Bearer Token、Prompt、历史和图片。
 - 调用 Go 代理的固定端点。
 - 解析 OpenAI Images API 的普通 JSON 响应和 SSE 流式响应。
@@ -27,6 +28,6 @@ npm run build
 ## 文件结构
 
 - `src/app`：应用壳和页面导航。
-- `src/components/ui`：shadcn/ui 风格基础组件。
+- `src/components/ui`：shadcn/ui 风格基础组件，包含 Radix Select 和 Checkbox 封装。
 - `src/lib`：数据库、API、SSE、图片保存、导出等通用能力。
 - `src/features`：生成、编辑、历史、预设、设置等业务功能。
