@@ -24,6 +24,21 @@ describe("图片本地保存", () => {
     db.close();
   });
 
+  it("保存 b64_json 时尊重调用方传入的 MIME 类型", async () => {
+    const db = createDatabase("openai-images-tool-image-test");
+    const image = await saveBase64Image(db, {
+      id: "image-jpeg",
+      taskId: "task-1",
+      b64Json: btoa("jpeg"),
+      mimeType: "image/jpeg",
+      source: "b64_json",
+    });
+
+    expect(image.mimeType).toBe("image/jpeg");
+    expect(image.blob?.type).toBe("image/jpeg");
+    db.close();
+  });
+
   it("URL 图片下载成功时保存 Blob", async () => {
     const db = createDatabase("openai-images-tool-image-test");
     vi.stubGlobal(

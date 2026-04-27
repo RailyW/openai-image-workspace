@@ -56,7 +56,13 @@ export async function runEditing(input: RunEditingInput): Promise<TaskRecord> {
 
     const imageIds: string[] = [];
     let responseMetadata: unknown;
+    const outputFormat =
+      input.mode === "json"
+        ? (requestBody as Record<string, unknown>).output_format
+        : ((input.values.output_format || undefined) as string | undefined);
+    const mimeType = mimeTypeFromOutputFormat(outputFormat);
     if (envelope.kind === "sse" && envelope.response.body) {
+      let completed = false;
       for await (const event of parseImageEventStream(envelope.response.body)) {
         if (event.event === "parser.error") {
           throw new Error(event.error);
@@ -65,18 +71,22 @@ export async function runEditing(input: RunEditingInput): Promise<TaskRecord> {
           input.onPartial?.(event.data.b64_json);
         }
         if (event.data.b64_json && event.event.endsWith("completed")) {
+          completed = true;
           const imageId = createId("image");
-          await saveBase64Image(db, { id: imageId, taskId, b64Json: event.data.b64_json, source: "sse" });
+          await saveBase64Image(db, { id: imageId, taskId, b64Json: event.data.b64_json, source: "sse", mimeType });
           imageIds.push(imageId);
           responseMetadata = { usage: event.data.usage };
         }
+      }
+      if (!completed || imageIds.length === 0) {
+        throw new Error("流式响应未收到 completed 事件或最终图片");
       }
     } else {
       const json = (await envelope.response.json()) as ImagesResponse;
       for (const item of strictImageData(json)) {
         const imageId = createId("image");
         if (item.b64_json) {
-          await saveBase64Image(db, { id: imageId, taskId, b64Json: item.b64_json, source: "b64_json" });
+          await saveBase64Image(db, { id: imageId, taskId, b64Json: item.b64_json, source: "b64_json", mimeType });
         } else if (item.url) {
           await saveImageUrl(db, { id: imageId, taskId, url: item.url });
         }
@@ -96,6 +106,17 @@ export async function runEditing(input: RunEditingInput): Promise<TaskRecord> {
     await db.tasks.put(failed);
     return failed;
   }
+}
+
+function mimeTypeFromOutputFormat(value: unknown) {
+  const format = String(value ?? "png").toLowerCase();
+  if (format === "jpeg" || format === "jpg") {
+    return "image/jpeg";
+  }
+  if (format === "webp") {
+    return "image/webp";
+  }
+  return "image/png";
 }
 
 function strictImageData(json: ImagesResponse) {

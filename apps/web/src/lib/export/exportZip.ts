@@ -42,6 +42,12 @@ export async function exportLocalDataZip(db: ImagesToolDatabase) {
   zip.file("prompt-snippets.json", JSON.stringify(promptSnippets, null, 2));
   zip.file("tasks.json", JSON.stringify(tasks, null, 2));
 
+  const imageManifest = images.map(({ blob, ...image }) => ({
+    ...image,
+    fileName: image.status === "stored" && blob ? `images/${image.id}.${extensionFromMime(image.mimeType)}` : undefined,
+  }));
+  zip.file("images.json", JSON.stringify(imageManifest, null, 2));
+
   for (const image of images) {
     if (image.status !== "stored" || !image.blob) {
       continue;

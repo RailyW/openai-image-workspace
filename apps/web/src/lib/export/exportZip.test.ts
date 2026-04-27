@@ -39,7 +39,13 @@ describe("本地数据导出", () => {
     expect(zip.file("presets.json")).toBeTruthy();
     expect(zip.file("prompt-snippets.json")).toBeTruthy();
     expect(zip.file("tasks.json")).toBeTruthy();
+    expect(zip.file("images.json")).toBeTruthy();
     expect(zip.file("images/image-1.png")).toBeTruthy();
+    const imageManifest = JSON.parse((await zip.file("images.json")?.async("text")) ?? "[]") as Array<{
+      id: string;
+      fileName?: string;
+    }>;
+    expect(imageManifest).toContainEqual(expect.objectContaining({ id: "image-1", fileName: "images/image-1.png" }));
     expect(exportWarningText).toContain("Bearer Token");
     db.close();
   });

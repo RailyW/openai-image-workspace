@@ -124,13 +124,20 @@ func TestHeadersAreForwardedAndFiltered(t *testing.T) {
 	var gotContentType string
 	var gotBaseURLHeader string
 	var gotConnection string
+	var gotCookie string
+	var gotOrigin string
+	var gotReferer string
 
 	proxy, upstream := newTestProxy(func(w http.ResponseWriter, r *http.Request) {
 		gotAuth = r.Header.Get("Authorization")
 		gotContentType = r.Header.Get("Content-Type")
 		gotBaseURLHeader = r.Header.Get(BaseURLHeader)
 		gotConnection = r.Header.Get("Connection")
+		gotCookie = r.Header.Get("Cookie")
+		gotOrigin = r.Header.Get("Origin")
+		gotReferer = r.Header.Get("Referer")
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Set-Cookie", "upstream=bad")
 		_, _ = w.Write([]byte(`{"data":[]}`))
 	})
 	defer upstream.Close()
@@ -140,6 +147,9 @@ func TestHeadersAreForwardedAndFiltered(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer local-token")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Connection", "keep-alive")
+	req.Header.Set("Cookie", "tool_session=secret")
+	req.Header.Set("Origin", "http://image-tool.local")
+	req.Header.Set("Referer", "http://image-tool.local/")
 	rec := httptest.NewRecorder()
 
 	proxy.ServeGeneration(rec, req)
@@ -155,6 +165,12 @@ func TestHeadersAreForwardedAndFiltered(t *testing.T) {
 	}
 	if gotConnection != "" {
 		t.Fatalf("expected hop-by-hop connection header filtered, got %q", gotConnection)
+	}
+	if gotCookie != "" || gotOrigin != "" || gotReferer != "" {
+		t.Fatalf("expected browser context headers filtered, got cookie=%q origin=%q referer=%q", gotCookie, gotOrigin, gotReferer)
+	}
+	if rec.Header().Get("Set-Cookie") != "" {
+		t.Fatalf("expected upstream set-cookie response header filtered, got %q", rec.Header().Get("Set-Cookie"))
 	}
 }
 

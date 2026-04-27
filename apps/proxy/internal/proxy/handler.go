@@ -32,6 +32,27 @@ var hopByHopHeaders = map[string]struct{}{
 	"Upgrade":             {},
 }
 
+var allowedRequestHeaders = map[string]struct{}{
+	"Accept":              {},
+	"Authorization":       {},
+	"Content-Length":      {},
+	"Content-Type":        {},
+	"Idempotency-Key":     {},
+	"Openai-Beta":         {},
+	"Openai-Organization": {},
+	"Openai-Project":      {},
+}
+
+var allowedResponseHeaders = map[string]struct{}{
+	"Cache-Control":       {},
+	"Content-Length":      {},
+	"Content-Type":        {},
+	"Openai-Organization": {},
+	"Openai-Processing-Ms": {},
+	"Openai-Version":      {},
+	"X-Request-Id":        {},
+}
+
 // ImageProxy 只代理 OpenAI Images 的两个固定端点。
 // 它不保存请求体或响应体，调用方应为每次请求提供 BaseURLHeader。
 type ImageProxy struct {
@@ -155,6 +176,9 @@ func copyProxyHeaders(dst http.Header, src http.Header) {
 		if _, blocked := hopByHopHeaders[canonical]; blocked {
 			continue
 		}
+		if _, allowed := allowedRequestHeaders[canonical]; !allowed {
+			continue
+		}
 		for _, value := range values {
 			dst.Add(canonical, value)
 		}
@@ -165,6 +189,9 @@ func copyResponseHeaders(dst http.Header, src http.Header) {
 	for name, values := range src {
 		canonical := http.CanonicalHeaderKey(name)
 		if _, blocked := hopByHopHeaders[canonical]; blocked {
+			continue
+		}
+		if _, allowed := allowedResponseHeaders[canonical]; !allowed {
 			continue
 		}
 		for _, value := range values {
