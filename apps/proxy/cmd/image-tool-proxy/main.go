@@ -1,27 +1,33 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http"
-	"os"
+
+	"gpt-image-v2-workspace/apps/proxy/internal/config"
+	"gpt-image-v2-workspace/apps/proxy/internal/logging"
+	"gpt-image-v2-workspace/apps/proxy/internal/proxy"
+	"gpt-image-v2-workspace/apps/proxy/internal/server"
 )
 
-// main 是 Go 代理服务的临时入口。后续任务会将配置、日志、静态资源和代理路由拆入 internal 模块。
+// main 是 Go 代理服务入口，负责装配配置、日志、代理和静态资源路由。
 func main() {
-	addr := os.Getenv("APP_LISTEN_ADDR")
-	if addr == "" {
-		addr = ":8000"
+	cfg := config.Load()
+	logger := logging.NewLogger(cfg.LogLevel)
+	imageProxy := &proxy.ImageProxy{
+		Client: &http.Client{Timeout: cfg.ProxyTimeout},
+		Logger: logger,
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = fmt.Fprint(w, "ok")
-	})
+	httpServer := &http.Server{
+		Addr:         cfg.ListenAddr,
+		Handler:      server.NewRouter(imageProxy, cfg.DistDir),
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
+		IdleTimeout:  cfg.IdleTimeout,
+	}
 
-	log.Printf("image tool proxy listening on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Fatal(err)
+	logger.Info("image tool proxy starting", "addr", cfg.ListenAddr, "dist_dir", cfg.DistDir)
+	if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		logger.Error("image tool proxy stopped unexpectedly", "error", err.Error())
 	}
 }
